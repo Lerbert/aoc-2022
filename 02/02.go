@@ -6,12 +6,21 @@ import (
 	"log"
 )
 
+type outcome byte
+
+const (
+	Lose outcome = 'X'
+	Draw outcome = 'Y'
+	Win  outcome = 'Z'
+)
+
 type symbol int
 
 const (
-	Rock symbol = iota
-	Paper
-	Scissors
+	Rock        symbol = 0
+	Paper       symbol = 1
+	Scissors    symbol = 2
+	NUM_SYMBOLS        = 3
 )
 
 func (s symbol) value() uint {
@@ -27,59 +36,26 @@ func (s symbol) value() uint {
 	panic("")
 }
 
-func (s1 symbol) beats(s2 symbol) byte {
+func (s1 symbol) beats(s2 symbol) outcome {
 	if s1 == s2 {
-		return 'Y'
+		return Draw
 	}
-	switch s1 {
-	case Rock:
-		switch s2 {
-		case Paper:
-			return 'X'
-		case Scissors:
-			return 'Z'
-		}
-	case Paper:
-		switch s2 {
-		case Scissors:
-			return 'X'
-		case Rock:
-			return 'Z'
-		}
-	case Scissors:
-		switch s2 {
-		case Rock:
-			return 'X'
-		case Paper:
-			return 'Z'
-		}
+	if (int(s1)+1)%NUM_SYMBOLS == int(s2) {
+		return Lose
+	} else {
+		return Win
 	}
-	log.Fatal("Unknown symbols", s1, s2)
-	panic("")
 }
 
-func (s symbol) playToGet(desiredOutcome byte) symbol {
+func (s symbol) playToGet(desiredOutcome outcome) symbol {
 	switch desiredOutcome {
-	case 'X':
-		switch s {
-		case Rock:
-			return Scissors
-		case Paper:
-			return Rock
-		case Scissors:
-			return Paper
-		}
-	case 'Y':
+	case Lose:
+		// return symbol((int(s) - 1) % NUM_SYMBOLS) // doesn't work because in Go -1 % 3 == -1
+		return symbol((int(s) + NUM_SYMBOLS - 1) % NUM_SYMBOLS)
+	case Draw:
 		return s
-	case 'Z':
-		switch s {
-		case Rock:
-			return Paper
-		case Paper:
-			return Scissors
-		case Scissors:
-			return Rock
-		}
+	case Win:
+		return symbol((int(s) + 1) % NUM_SYMBOLS)
 	}
 	log.Fatal("Unknown symbol or outcome", s, desiredOutcome)
 	panic("")
@@ -105,11 +81,11 @@ type strategy struct {
 
 func (s strategy) outcome() uint {
 	switch s.player.beats(s.opponent) {
-	case 'X':
+	case Lose:
 		return 0
-	case 'Y':
+	case Draw:
 		return 3
-	case 'Z':
+	case Win:
 		return 6
 	}
 	log.Fatal("Result not known")
@@ -133,16 +109,24 @@ func strategyFromLine2(s string) strategy {
 	op := symbolFromChar(bytes[0])
 	return strategy{
 		opponent: op,
-		player:   op.playToGet(bytes[2]),
+		player:   op.playToGet(outcome(bytes[2])),
 	}
 }
 
 func main() {
 	lines := inp.ReadLines("input")
-	score := uint(0)
+
+	score1 := uint(0)
+	for _, l := range lines {
+		strategy := strategyFromLine(l)
+		score1 += strategy.score()
+	}
+	fmt.Printf("Part 1: %d\n", score1)
+
+	score2 := uint(0)
 	for _, l := range lines {
 		strategy := strategyFromLine2(l)
-		score += strategy.score()
+		score2 += strategy.score()
 	}
-	fmt.Println(score)
+	fmt.Printf("Part 2: %d\n", score2)
 }
