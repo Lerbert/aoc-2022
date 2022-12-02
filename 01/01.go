@@ -1,11 +1,10 @@
 package main
 
 import (
-	"bufio"
+	inp "aoc2022/input"
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
 )
 
@@ -13,7 +12,7 @@ const ESTIMATED_INPUTS = 2000
 const ESTIMATED_ITEMS_PER_ELF = 8
 
 func main() {
-	lines := readLines("input")
+	lines := inp.ReadLines("input")
 	elves := splitElves(lines)
 	calories_per_elf := make([]int, len(elves))
 	for i, elf := range elves {
@@ -21,20 +20,6 @@ func main() {
 	}
 	fmt.Println(max(calories_per_elf))
 	fmt.Println(sum(maxN(calories_per_elf, 3)))
-}
-
-func readLines(path string) []string {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal("Could not open file", err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	lines := make([]string, 0, ESTIMATED_INPUTS)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines
 }
 
 func splitElves(lines []string) [][]int {
