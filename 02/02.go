@@ -27,34 +27,61 @@ func (s symbol) value() uint {
 	panic("")
 }
 
-func (s1 symbol) beats(s2 symbol) int {
+func (s1 symbol) beats(s2 symbol) byte {
 	if s1 == s2 {
-		return 0
+		return 'Y'
 	}
 	switch s1 {
 	case Rock:
 		switch s2 {
 		case Paper:
-			return -1
+			return 'X'
 		case Scissors:
-			return 1
+			return 'Z'
 		}
 	case Paper:
 		switch s2 {
 		case Scissors:
-			return -1
+			return 'X'
 		case Rock:
-			return 1
+			return 'Z'
 		}
 	case Scissors:
 		switch s2 {
 		case Rock:
-			return -1
+			return 'X'
 		case Paper:
-			return 1
+			return 'Z'
 		}
 	}
 	log.Fatal("Unknown symbols", s1, s2)
+	panic("")
+}
+
+func (s symbol) playToGet(desiredOutcome byte) symbol {
+	switch desiredOutcome {
+	case 'X':
+		switch s {
+		case Rock:
+			return Scissors
+		case Paper:
+			return Rock
+		case Scissors:
+			return Paper
+		}
+	case 'Y':
+		return s
+	case 'Z':
+		switch s {
+		case Rock:
+			return Paper
+		case Paper:
+			return Scissors
+		case Scissors:
+			return Rock
+		}
+	}
+	log.Fatal("Unknown symbol or outcome", s, desiredOutcome)
 	panic("")
 }
 
@@ -78,11 +105,11 @@ type strategy struct {
 
 func (s strategy) outcome() uint {
 	switch s.player.beats(s.opponent) {
-	case -1:
+	case 'X':
 		return 0
-	case 0:
+	case 'Y':
 		return 3
-	case 1:
+	case 'Z':
 		return 6
 	}
 	log.Fatal("Result not known")
@@ -101,11 +128,20 @@ func strategyFromLine(s string) strategy {
 	}
 }
 
+func strategyFromLine2(s string) strategy {
+	bytes := []byte(s)
+	op := symbolFromChar(bytes[0])
+	return strategy{
+		opponent: op,
+		player:   op.playToGet(bytes[2]),
+	}
+}
+
 func main() {
 	lines := inp.ReadLines("input")
 	score := uint(0)
 	for _, l := range lines {
-		strategy := strategyFromLine(l)
+		strategy := strategyFromLine2(l)
 		score += strategy.score()
 	}
 	fmt.Println(score)
