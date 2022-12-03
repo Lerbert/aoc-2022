@@ -41,18 +41,79 @@ func (r rucksack) findDuplicate() byte {
 	panic("")
 }
 
+func (r rucksack) uniqueItems() []byte {
+	m := make(map[byte]struct{})
+	for _, item := range r {
+		m[item] = struct{}{}
+	}
+	keys := make([]byte, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	return keys
+}
+
 func rucksackFromLine(s string) rucksack {
 	return []byte(s)
+}
+
+func groupBy[T interface{}](s []T, n int) [][]T {
+	grouped := make([][]T, 0, len(s)/n)
+	groupIndex := -1
+	for i, e := range s {
+		if i%n == 0 {
+			groupIndex++
+			grouped = append(grouped, make([]T, 0, n))
+		}
+		grouped[groupIndex] = append(grouped[groupIndex], e)
+	}
+	return grouped
+}
+
+func findRucksackBadge(rs []rucksack) byte {
+	foundItems := make(map[byte]int)
+	numRucksacks := len(rs)
+	for _, r := range rs {
+		for _, b := range r.uniqueItems() {
+			val, ok := foundItems[b]
+			if ok {
+				val++
+				if val == numRucksacks {
+					return b
+				} else {
+					foundItems[b] = val
+				}
+			} else {
+				foundItems[b] = 1
+			}
+		}
+	}
+	log.Fatal("No duplicate item found")
+	panic("")
 }
 
 func main() {
 	lines := inp.ReadLines("input")
 
-	prioSum := uint(0)
-	for _, l := range lines {
-		rucksack := rucksackFromLine(l)
-		duplicate := rucksack.findDuplicate()
-		prioSum += priority(duplicate)
+	rucksacks := make([]rucksack, len(lines))
+	for i, l := range lines {
+		rucksacks[i] = rucksackFromLine(l)
 	}
-	fmt.Printf("Part 1: %d\n", prioSum)
+
+	prioSum1 := uint(0)
+	for _, r := range rucksacks {
+		duplicate := r.findDuplicate()
+		prioSum1 += priority(duplicate)
+	}
+	fmt.Printf("Part 1: %d\n", prioSum1)
+
+	groupedElves := groupBy(rucksacks, 3)
+	prioSum2 := uint(0)
+	for _, g := range groupedElves {
+		badge := findRucksackBadge(g)
+		prioSum2 += priority(badge)
+	}
+	fmt.Printf("Part 2: %d\n", prioSum2)
 }
