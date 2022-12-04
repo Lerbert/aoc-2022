@@ -13,8 +13,16 @@ type idRange struct {
 	upper int
 }
 
+func (r idRange) contains(number int) bool {
+	return r.lower <= number && r.upper >= number
+}
+
 func (r idRange) includes(other idRange) bool {
 	return other.lower >= r.lower && other.upper <= r.upper
+}
+
+func (r idRange) overlaps(other idRange) bool {
+	return r.contains(other.lower) || r.contains(other.upper) || other.includes(r)
 }
 
 func idRangeFromString(s string) idRange {
@@ -58,4 +66,12 @@ func main() {
 		}
 	}
 	fmt.Printf("Part 1: %d\n", numIncluded)
+
+	numOverlapping := 0
+	for _, p := range pairs {
+		if p.first.overlaps(p.second) {
+			numOverlapping++
+		}
+	}
+	fmt.Printf("Part 2: %d\n", numOverlapping)
 }
