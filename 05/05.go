@@ -29,9 +29,6 @@ func (s *Stack[T]) Push(es ...T) {
 
 func (s *Stack[T]) Pop(n int) []T {
 	popped := s.s[len(s.s)-n:]
-	for i, j := 0, len(popped)-1; i < j; i, j = i+1, j-1 {
-		popped[i], popped[j] = popped[j], popped[i]
-	}
 	s.s = s.s[:len(s.s)-n]
 	return popped
 }
@@ -46,8 +43,17 @@ type instruction struct {
 	cnt  int
 }
 
-func (instr instruction) execute(stacks *[]Stack[crate]) {
-	(*stacks)[instr.to-1].Push((*stacks)[instr.from-1].Pop(instr.cnt)...)
+func (instr instruction) execute9000(stacks *[]Stack[crate]) {
+	popped := (*stacks)[instr.from-1].Pop(instr.cnt)
+	for i, j := 0, len(popped)-1; i < j; i, j = i+1, j-1 {
+		popped[i], popped[j] = popped[j], popped[i]
+	}
+	(*stacks)[instr.to-1].Push(popped...)
+}
+
+func (instr instruction) execute9001(stacks *[]Stack[crate]) {
+	popped := (*stacks)[instr.from-1].Pop(instr.cnt)
+	(*stacks)[instr.to-1].Push(popped...)
 }
 
 func instructionFromLine(l string) instruction {
@@ -96,8 +102,17 @@ func main() {
 	}
 
 	for _, instr := range instructions {
-		instr.execute(&stacks)
-		// fmt.Println(stacks)
+		instr.execute9000(&stacks)
 	}
 	fmt.Printf("Part 1: %s\n", topElems(stacks))
+
+	stacks = make([]Stack[crate], len(stackLines))
+	for i, l := range stackLines {
+		stacks[i] = StackFromSlice([]crate(l))
+	}
+
+	for _, instr := range instructions {
+		instr.execute9001(&stacks)
+	}
+	fmt.Printf("Part 2: %s\n", topElems(stacks))
 }
