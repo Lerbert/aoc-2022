@@ -18,13 +18,21 @@ func hasDuplicates[T comparable](s []T) bool {
 	return false
 }
 
-func findStartOfPacket(message []byte) int {
-	for i := 0; i < len(message)-4; i++ {
-		if !hasDuplicates(message[i : i+4]) {
-			return i + 4
+func findDistincts(message []byte, n int) int {
+	for i := 0; i < len(message)-n; i++ {
+		if !hasDuplicates(message[i : i+n]) {
+			return i + n
 		}
 	}
 	return -1
+}
+
+func findStartOfPacket(message []byte) int {
+	return findDistincts(message, 4)
+}
+
+func findStartOfMessage(message []byte) int {
+	return findDistincts(message, 14)
 }
 
 func main() {
@@ -33,4 +41,7 @@ func main() {
 
 	startOfPacket := findStartOfPacket(message)
 	fmt.Printf("Part 1: %d\n", startOfPacket)
+
+	startOfMessage := findStartOfMessage(message)
+	fmt.Printf("Part 2: %d\n", startOfMessage)
 }
