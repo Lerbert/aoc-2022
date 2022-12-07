@@ -64,6 +64,9 @@ func addSizeToAll(dirStack []string, dirSizes *map[string]int, size int) {
 	}
 }
 
+const TOTAL_SPACE = 70000000
+const REQUIRED_SPACE = 30000000
+
 func main() {
 	lines := inp.ReadLines("input")
 	dirStack := make([]string, 0)
@@ -87,4 +90,14 @@ func main() {
 		}
 	}
 	fmt.Printf("Part 1: %d\n", sizeSum)
+
+	freeSpace := TOTAL_SPACE - dirSizes["/"]
+	toDelete := REQUIRED_SPACE - freeSpace
+	currentBest := dirSizes["/"]
+	for _, size := range dirSizes {
+		if size >= toDelete && size < currentBest {
+			currentBest = size
+		}
+	}
+	fmt.Printf("Part 2: %d\n", currentBest)
 }
