@@ -66,63 +66,70 @@ func abs(x int) int {
 }
 
 type rope struct {
-	head position
-	tail position
+	knots []position
 }
 
 func (r *rope) move(m motion) []position {
+	if m.l == 0 {
+		return []position{r.knots[len(r.knots)-1]}
+	}
+
 	// Move head
 	switch m.d {
 	case Right:
-		r.head.x += m.l
+		r.knots[0].x++
 	case Up:
-		r.head.y += m.l
+		r.knots[0].y++
 	case Left:
-		r.head.x -= m.l
+		r.knots[0].x--
 	case Down:
-		r.head.y -= m.l
+		r.knots[0].y--
 	}
 
-	return r.pullTail()
+	for i := 1; i < len(r.knots); i++ {
+		r.pullKnot(i)
+	}
+
+	tailPos := r.knots[len(r.knots)-1]
+	return append(r.move(motion{d: m.d, l: m.l - 1}), tailPos)
 }
 
-func (r *rope) pullTail() []position {
-	if r.tail.adjacent(r.head) {
-		return []position{r.tail}
+func (r *rope) pullKnot(i int) {
+	head := &r.knots[i-1]
+	tail := &r.knots[i]
+	if !tail.adjacent(*head) {
+		tail.x += sgn(head.x - tail.x)
+		tail.y += sgn(head.y - tail.y)
 	}
-
-	// diagonal if necessary
-	if abs(r.head.x-r.tail.x) == 1 {
-		r.tail.x = r.head.x
-	} else if abs(r.head.y-r.tail.y) == 1 {
-		r.tail.y = r.head.y
-	}
-
-	return r.pullTailRec()
 }
 
-func (r *rope) pullTailRec() []position {
-	if r.tail.adjacent(r.head) {
-		return []position{r.tail}
-	}
-
-	if r.head.x == r.tail.x {
-		if r.tail.y > r.head.y {
-			r.tail.y -= 1
-		} else {
-			r.tail.y += 1
-		}
-	} else if r.head.y == r.tail.y {
-		if r.tail.x > r.head.x {
-			r.tail.x -= 1
-		} else {
-			r.tail.x += 1
-		}
+func sgn(x int) int {
+	if x > 0 {
+		return 1
+	} else if x < 0 {
+		return -1
 	} else {
-		panic("unreachable")
+		return 0
 	}
-	tailPos := r.tail
-	return append(r.pullTailRec(), tailPos)
+}
+
+func simulateRope(motions []motion, ropeLength int) int {
+	initPos := position{x: 0, y: 0}
+	knots := make([]position, ropeLength)
+	for i := range knots {
+		knots[i] = initPos
+	}
+	rope := rope{knots}
+
+	tailVisited := make(map[position]struct{})
+	tailVisited[initPos] = struct{}{}
+	for _, m := range motions {
+		positions := rope.move(m)
+		for _, p := range positions {
+			tailVisited[p] = struct{}{}
+		}
+	}
+	return len(tailVisited)
 }
 
 func main() {
@@ -131,21 +138,10 @@ func main() {
 	for i, l := range lines {
 		motions[i] = motionFromLine(l)
 	}
-	rope := rope{
-		head: position{x: 0, y: 0},
-		tail: position{x: 0, y: 0},
-	}
 
-	tailVisited := make(map[position]struct{})
-	tailVisited[rope.tail] = struct{}{}
-	for _, m := range motions {
-		positions := rope.move(m)
-		for _, p := range positions {
-			tailVisited[p] = struct{}{}
-		}
-	}
-	fmt.Printf("Part 1: %d\n", len(tailVisited))
+	tailVisited := simulateRope(motions, 2)
+	fmt.Printf("Part 1: %d\n", tailVisited)
 
-	// bestScore := max(scenicScore)
-	// fmt.Printf("Part 2: %d\n", bestScore)
+	tailVisited = simulateRope(motions, 10)
+	fmt.Printf("Part 2: %d\n", tailVisited)
 }
