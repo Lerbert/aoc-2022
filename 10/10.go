@@ -13,25 +13,53 @@ type executer interface {
 	execute(*cpu)
 }
 
-type cpu struct {
-	pc int
-	x  int
+type crt [6][40]bool
+
+func (c *crt) print() {
+	for _, row := range c {
+		for _, lit := range row {
+			if lit {
+				fmt.Print("#")
+			} else {
+				fmt.Print(".")
+			}
+		}
+		fmt.Print("\n")
+	}
 }
 
-func (c *cpu) executeProgram(prog []executer, recordInterval int) map[int]int {
+type cpu struct {
+	cycle int
+	pc    int
+	x     int
+}
+
+func (c *cpu) executeProgram(prog []executer, screen *crt, recordInterval int) map[int]int {
 	xVals := make(map[int]int)
-	c.pc = 1
+	c.cycle = 0
+	c.pc = 0
 	c.x = 1
-	for _, instr := range prog {
-		oldPc := c.pc
-		c.pc += instr.duration()
-		if oldPc/recordInterval < c.pc/recordInterval {
-			xVals[c.pc/recordInterval*recordInterval] = c.x
+
+	fetch := 0
+	var instr executer = noop{}
+
+	for c.pc < len(prog) {
+		if c.cycle%recordInterval == 0 {
+			xVals[c.cycle] = c.x
 		}
-		instr.execute(c)
-		if c.pc%recordInterval == 0 {
-			xVals[c.pc] = c.x
+		if c.cycle > 0 {
+			row := (c.cycle - 1) / 40
+			col := (c.cycle - 1) % 40
+			(*screen)[row][col] = c.x-col <= 1 && c.x-col >= -1
 		}
+		if fetch == 0 {
+			instr.execute(c)
+			instr = prog[c.pc]
+			fetch = instr.duration()
+			c.pc++
+		}
+		fetch--
+		c.cycle++
 	}
 	return xVals
 }
@@ -80,8 +108,9 @@ func main() {
 		instructions[i] = parseInstruction(l)
 	}
 	c := cpu{pc: 0, x: 1}
+	var screen crt
 
-	xVals := c.executeProgram(instructions, 20)
+	xVals := c.executeProgram(instructions, &screen, 20)
 	signalStrength := 0
 	for cycle, x := range xVals {
 		if cycle%20 != 0 {
@@ -92,4 +121,6 @@ func main() {
 		}
 	}
 	fmt.Printf("Part 1: %d\n", signalStrength)
+	fmt.Println("Part 2:")
+	screen.print()
 }
