@@ -27,7 +27,7 @@ type monkey struct {
 	inspectedItems int
 }
 
-func (m *monkey) takeTurn(monkeys *[]monkey) {
+func (m *monkey) takeTurn(monkeys *[]monkey, manageWorry func(int) int) {
 	for _, item := range m.items {
 		var opRhs int
 		if m.rhs < 0 {
@@ -41,7 +41,7 @@ func (m *monkey) takeTurn(monkeys *[]monkey) {
 		} else if m.op == Add {
 			worry = item + opRhs
 		}
-		worry /= 3
+		worry = manageWorry(worry)
 		if worry%m.test == 0 {
 			(*monkeys)[m.onTrue].items = append((*monkeys)[m.onTrue].items, worry)
 		} else {
@@ -52,9 +52,9 @@ func (m *monkey) takeTurn(monkeys *[]monkey) {
 	m.items = make([]int, 0)
 }
 
-func playRound(monkeys *[]monkey) {
+func playRound(monkeys *[]monkey, manageWorry func(int) int) {
 	for i := range *monkeys {
-		(*monkeys)[i].takeTurn(monkeys)
+		(*monkeys)[i].takeTurn(monkeys, manageWorry)
 	}
 }
 
@@ -122,8 +122,21 @@ func main() {
 	}
 
 	for round := 0; round < 20; round++ {
-		playRound(&monkeys)
+		playRound(&monkeys, func(worry int) int { return worry / 3 })
 	}
-	businessScore := monkeyBusiness(&monkeys)
-	fmt.Printf("Part 1: %d\n", businessScore)
+	businessScore1 := monkeyBusiness(&monkeys)
+	fmt.Printf("Part 1: %d\n", businessScore1)
+
+	// Reset for part 2
+	monkeys = make([]monkey, int(math.Ceil(float64(len(lines))/7)))
+	for i := range monkeys {
+		monkeys[i] = parseMonkey(lines[i*7 : (i+1)*7])
+	}
+	// Since all tests are prime we can find the least common multiple by simply multiplying
+	lcm := util.Reduce(&monkeys, 1, func(acc int, m monkey) int { return m.test * acc })
+	for round := 0; round < 10000; round++ {
+		playRound(&monkeys, func(worry int) int { return worry % lcm })
+	}
+	businessScore2 := monkeyBusiness(&monkeys)
+	fmt.Printf("Part 2: %d\n", businessScore2)
 }

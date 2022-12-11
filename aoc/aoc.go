@@ -10,6 +10,24 @@ func Map[T interface{}, S interface{}](s *[]T, f func(T) S) []S {
 	return res
 }
 
+func Filter[T interface{}](s *[]T, f func(T) bool) []T {
+	res := make([]T, 0, len(*s))
+	for _, v := range *s {
+		if f(v) {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+
+func Reduce[T interface{}, S interface{}](s *[]T, init S, f func(S, T) S) S {
+	res := init
+	for _, v := range *s {
+		res = f(res, v)
+	}
+	return res
+}
+
 func MaxN(s []int, n int) []int {
 	// index i is the top i+1-th element
 	maxs := make([]int, n)
