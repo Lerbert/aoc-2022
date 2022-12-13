@@ -58,6 +58,16 @@ func (p packet) rightOrder(other packet) int {
 	}
 }
 
+func findSortedIndex(packets []packet, div packet) int {
+	index := 1
+	for _, p := range packets {
+		if p.rightOrder(div) > 0 {
+			index++
+		}
+	}
+	return index
+}
+
 func main() {
 	lines := inp.ReadLines("input")
 	lines = util.Filter(&lines, func(s string) bool { return s != "" })
@@ -75,4 +85,8 @@ func main() {
 		}
 	}
 	fmt.Printf("Part 1: %d\n", indexSum)
+
+	div1 := findSortedIndex(packets, packet{[]interface{}{2.0}})
+	div2 := findSortedIndex(packets, packet{[]interface{}{6.0}}) + 1 // div1 is smaller than div2, but not included in packets
+	fmt.Printf("Part 2: %d\n", div1*div2)
 }
