@@ -5,6 +5,7 @@ import (
 	inp "aoc2022/input"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -63,6 +64,10 @@ func fillWithSand(rocks *[]rockFormation, start util.Coord) int {
 	sand := make(map[util.Coord]struct{})
 	sandGrains := 0
 	for ; ; sandGrains++ {
+		_, sourceBlocked := sand[start]
+		if sourceBlocked {
+			break
+		}
 		finiteFall := addSand(rocks, deepest, &sand, start)
 		if !finiteFall {
 			break
@@ -77,4 +82,9 @@ func main() {
 
 	sandComeToRest := fillWithSand(&rocks, util.Coord{X: 500, Y: 0})
 	fmt.Printf("Part 1: %d\n", sandComeToRest)
+
+	deepest := util.Max(util.Map(&rocks, func(r rockFormation) int { return r.deepest() }))
+	rocks = append(rocks, rockFormation{nodes: []util.Coord{{X: math.MinInt, Y: deepest + 2}, {X: math.MaxInt, Y: deepest + 2}}})
+	sandComeToRest = fillWithSand(&rocks, util.Coord{X: 500, Y: 0})
+	fmt.Printf("Part 2: %d\n", sandComeToRest)
 }
