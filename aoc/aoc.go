@@ -1,6 +1,23 @@
 package aoc
 
-import "math"
+import (
+	"math"
+
+	"golang.org/x/exp/constraints"
+)
+
+type Coord struct {
+	X int
+	Y int
+}
+
+func Between[T constraints.Ordered](x T, b1 T, b2 T) bool {
+	if b1 <= b2 {
+		return b1 <= x && x <= b2
+	} else {
+		return b2 <= x && x <= b1
+	}
+}
 
 func Map[T interface{}, S interface{}](s *[]T, f func(T) S) []S {
 	res := make([]S, len(*s))
@@ -26,6 +43,43 @@ func Reduce[T interface{}, S interface{}](s *[]T, init S, f func(S, T) S) S {
 		res = f(res, v)
 	}
 	return res
+}
+
+func Any(s *[]bool) bool {
+	for _, v := range *s {
+		if v {
+			return true
+		}
+	}
+	return false
+}
+
+func All(s *[]bool) bool {
+	for _, v := range *s {
+		if !v {
+			return false
+		}
+	}
+	return true
+}
+
+func Contains[T comparable](s *[]T, e T) bool {
+	for _, v := range *s {
+		if v == e {
+			return true
+		}
+	}
+	return false
+}
+
+func Max(s []int) int {
+	max := math.MinInt
+	for _, v := range s {
+		if v > max {
+			max = v
+		}
+	}
+	return max
 }
 
 func MaxN(s []int, n int) []int {
