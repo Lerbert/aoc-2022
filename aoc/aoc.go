@@ -11,6 +11,27 @@ type Coord struct {
 	Y int
 }
 
+func (c Coord) ManhattanDistance(other Coord) int {
+	return Abs(c.X-other.X) + Abs(c.Y-other.Y)
+}
+
+type Range struct {
+	Lower int
+	Upper int
+}
+
+func (r Range) Contains(number int) bool {
+	return r.Lower <= number && r.Upper >= number
+}
+
+func (r Range) Includes(other Range) bool {
+	return other.Lower >= r.Lower && other.Upper <= r.Upper
+}
+
+func (r Range) Overlaps(other Range) bool {
+	return r.Contains(other.Lower) || r.Contains(other.Upper) || other.Includes(r)
+}
+
 func Between[T constraints.Ordered](x T, b1 T, b2 T) bool {
 	if b1 <= b2 {
 		return b1 <= x && x <= b2
@@ -72,6 +93,14 @@ func Contains[T comparable](s *[]T, e T) bool {
 	return false
 }
 
+func Sum(s []int) int {
+	sum := 0
+	for _, v := range s {
+		sum += v
+	}
+	return sum
+}
+
 func Max(s []int) int {
 	max := math.MinInt
 	for _, v := range s {
@@ -100,4 +129,22 @@ func MaxN(s []int, n int) []int {
 		}
 	}
 	return maxs
+}
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	} else {
+		return x
+	}
+}
+
+func Sgn(x int) int {
+	if x > 0 {
+		return 1
+	} else if x < 0 {
+		return -1
+	} else {
+		return 0
+	}
 }
