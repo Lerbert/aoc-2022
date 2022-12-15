@@ -78,7 +78,39 @@ func coveredBeacons(ranges []util.Range, beacons map[util.Coord]struct{}, height
 	return sum
 }
 
-const HEIGHT = 2000000
+func rangesForHeight(sensors []sensor, height int) []util.Range {
+	ranges := make([]util.Range, 0)
+	for _, s := range sensors {
+		newRange, ok := s.coveredAtHeight(height)
+		if ok {
+			ranges = mergeRanges(ranges, newRange)
+		}
+	}
+	return ranges
+}
+
+func findUncoveredSpot(sensors []sensor, maxSearch int) (int, int) {
+	var y int
+	for y = 0; y <= maxSearch; y++ {
+		ranges := rangesForHeight(sensors, y)
+		inclusion := util.Map(&ranges, func(r util.Range) bool { return r.Includes(util.Range{Lower: 0, Upper: maxSearch}) })
+		if !util.Any(&inclusion) {
+			for _, r := range ranges {
+				if r.Contains(0) {
+					// There is exactly one uncovered spot between 0 and maxSearch, so it must be one after the range that contains zero
+					return r.Upper + 1, y
+				}
+			}
+			// If no range contains zero, zero must be uncovered
+			return 0, y
+		}
+	}
+	panic("No uncovered spot")
+}
+
+const HEIGHT = 2_000_000
+const SEARCH = 4_000_000
+const X_FACTOR = 4_000_000
 
 func main() {
 	lines := inp.ReadLines("input")
@@ -88,14 +120,11 @@ func main() {
 		beacons[s.beacon] = struct{}{}
 	}
 
-	ranges := make([]util.Range, 0)
-	for _, s := range sensors {
-		newRange, ok := s.coveredAtHeight(HEIGHT)
-		if ok {
-			ranges = mergeRanges(ranges, newRange)
-		}
-	}
+	ranges := rangesForHeight(sensors, HEIGHT)
 	coveredSpots := util.Sum(util.Map(&ranges, func(r util.Range) int { return r.Upper - r.Lower + 1 }))
 	correction := coveredBeacons(ranges, beacons, HEIGHT)
 	fmt.Printf("Part 1: %d\n", coveredSpots-correction)
+
+	x, y := findUncoveredSpot(sensors, SEARCH)
+	fmt.Printf("Part 2: %d\n", x*X_FACTOR+y)
 }
