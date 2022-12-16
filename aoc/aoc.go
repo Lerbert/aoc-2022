@@ -84,13 +84,30 @@ func All(s *[]bool) bool {
 	return true
 }
 
-func Contains[T comparable](s *[]T, e T) bool {
-	for _, v := range *s {
+func Contains[T comparable](s []T, e T) bool {
+	for _, v := range s {
 		if v == e {
 			return true
 		}
 	}
 	return false
+}
+
+func SetEqual[T comparable](s1 []T, s2 []T) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	setS1 := make(map[T]struct{})
+	for _, v := range s1 {
+		setS1[v] = struct{}{}
+	}
+	for _, v := range s2 {
+		if _, ok := setS1[v]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func Sum(s []int) int {
