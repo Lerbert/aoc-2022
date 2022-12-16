@@ -16,6 +16,8 @@ type valve struct {
 	flowRate int
 }
 
+// ============Preprocessing============
+
 var valveRe = regexp.MustCompile(`Valve (..) has flow rate=(\d*); tunnels? leads? to valves? ((?:(?:, )?..)*)`)
 
 func valveFromline(s string) (valve, []string) {
@@ -76,17 +78,14 @@ func reduceGraph(valves map[string]valve, neighbors map[string][]string) (map[st
 	return nonZeroFlowOrStart, paths
 }
 
-type valveTracker struct {
-	v      valve
-	minute int
-}
+// ============Common============
 
 type openedScore struct {
-	opened []string
+	opened map[string]struct{}
 	score  int
 }
 
-func findOpenedScore(s []openedScore, opened []string) (int, bool) {
+func findOpenedScore(s []openedScore, opened map[string]struct{}) (int, bool) {
 	for _, v := range s {
 		if util.SetEqual(v.opened, opened) {
 			return v.score, true
@@ -95,14 +94,21 @@ func findOpenedScore(s []openedScore, opened []string) (int, bool) {
 	return 0, false
 }
 
+// ============Part 1============
+
+type valveTracker struct {
+	v      valve
+	minute int
+}
+
 func findMaxPressureRelease(valves map[string]valve, tunnels map[string]map[string]int, minutes int) int {
 	cur := valveTracker{v: valves["AA"], minute: minutes}
-	opened := make([]string, 0)
+	opened := make(map[string]struct{})
 	memo := make(map[valveTracker][]openedScore)
 	return findMaxRec(valves, tunnels, cur, opened, memo)
 }
 
-func findMaxRec(valves map[string]valve, tunnels map[string]map[string]int, cur valveTracker, opened []string, memo map[valveTracker][]openedScore) int {
+func findMaxRec(valves map[string]valve, tunnels map[string]map[string]int, cur valveTracker, opened map[string]struct{}, memo map[valveTracker][]openedScore) int {
 	opScore, ok := memo[cur]
 	if ok {
 		score, found := findOpenedScore(opScore, opened)
@@ -112,9 +118,14 @@ func findMaxRec(valves map[string]valve, tunnels map[string]map[string]int, cur 
 	}
 
 	bestScore := 0
-	nextOpened := append(append(make([]string, 0, len(opened)+1), opened...), cur.v.id)
+	nextOpened := make(map[string]struct{})
+	for v := range opened {
+		nextOpened[v] = struct{}{}
+	}
+	nextOpened[cur.v.id] = struct{}{}
 	for _, v := range valves {
-		if !util.Contains(nextOpened, v.id) {
+		_, alreadyOpen := nextOpened[v.id]
+		if !alreadyOpen {
 			reached := cur.minute - tunnels[cur.v.id][v.id]
 			if reached < 0 {
 				continue
@@ -134,6 +145,121 @@ func findMaxRec(valves map[string]valve, tunnels map[string]map[string]int, cur 
 	return score
 }
 
+// ============Part 2============
+
+type valveTrackerElephant struct {
+	trackers [2]valveTracker
+}
+
+func (vte valveTrackerElephant) swapped() valveTrackerElephant {
+	return valveTrackerElephant{trackers: [2]valveTracker{vte.trackers[1], vte.trackers[0]}}
+}
+
+func findMaxPressureReleaseElephant(valves map[string]valve, tunnels map[string]map[string]int, minutes int) int {
+	cur := valveTrackerElephant{trackers: [2]valveTracker{{v: valves["AA"], minute: minutes}, {v: valves["AA"], minute: minutes}}}
+	opened := make(map[string]struct{}, 0)
+	memo := make(map[valveTrackerElephant][]openedScore)
+	return findMaxRecElephant(valves, tunnels, cur, opened, memo)
+}
+
+func findMaxRecElephant(valves map[string]valve, tunnels map[string]map[string]int, cur valveTrackerElephant, opened map[string]struct{}, memo map[valveTrackerElephant][]openedScore) int {
+	opScore, ok := memo[cur]
+	if ok {
+		score, found := findOpenedScore(opScore, opened)
+		if found {
+			return score
+		}
+	} else {
+		opScore, ok := memo[cur.swapped()]
+		if ok {
+			score, found := findOpenedScore(opScore, opened)
+			if found {
+				return score
+			}
+		}
+	}
+
+	bestScore := 0
+	nextOpened := make(map[string]struct{})
+	for v := range opened {
+		nextOpened[v] = struct{}{}
+	}
+	nextOpened[cur.trackers[0].v.id] = struct{}{}
+	nextOpened[cur.trackers[1].v.id] = struct{}{}
+	if len(nextOpened) < len(valves) {
+		skipped := true
+		for _, v := range valves {
+			_, alreadyOpenV := nextOpened[v.id]
+			if alreadyOpenV {
+				continue
+			}
+			reachedV := cur.trackers[0].minute - tunnels[cur.trackers[0].v.id][v.id]
+			if reachedV < 0 {
+				continue
+			}
+			skipped = false
+			skippedInner := true
+			for _, w := range valves {
+				if w == v {
+					continue
+				}
+				_, alreadyOpenW := nextOpened[w.id]
+				if alreadyOpenW {
+					continue
+				}
+				reachedW := cur.trackers[1].minute - tunnels[cur.trackers[1].v.id][w.id]
+				if reachedW < 0 {
+					continue
+				}
+				skippedInner = false
+				next := valveTrackerElephant{[2]valveTracker{{v: v, minute: reachedV}, {v: w, minute: reachedW}}}
+				score := findMaxRecElephant(valves, tunnels, next, nextOpened, memo)
+				if score > bestScore {
+					bestScore = score
+				}
+			}
+			if skippedInner {
+				next := valveTrackerElephant{[2]valveTracker{{v: v, minute: reachedV}, cur.trackers[1]}}
+				score := findMaxRecElephant(valves, tunnels, next, nextOpened, memo)
+				if score > bestScore {
+					bestScore = score
+				}
+			}
+		}
+		if skipped {
+			for _, w := range valves {
+				_, alreadyOpenW := nextOpened[w.id]
+				if alreadyOpenW {
+					continue
+				}
+				reachedW := cur.trackers[1].minute - tunnels[cur.trackers[1].v.id][w.id]
+				if reachedW < 0 {
+					continue
+				}
+				next := valveTrackerElephant{[2]valveTracker{cur.trackers[0], {v: w, minute: reachedW}}}
+				score := findMaxRecElephant(valves, tunnels, next, nextOpened, memo)
+				if score > bestScore {
+					bestScore = score
+				}
+			}
+		}
+	}
+	// We will never be at the same valve except at the start, but there flow rate is 0
+	score := bestScore
+	for i := range cur.trackers {
+		// If we skipped a loop above we must not count the same valve twice
+		if _, ok := opened[cur.trackers[i].v.id]; !ok {
+			score += cur.trackers[i].minute * cur.trackers[i].v.flowRate
+		}
+	}
+
+	if !ok {
+		memo[cur] = make([]openedScore, 0)
+	}
+	memo[cur] = append(memo[cur], openedScore{opened: opened, score: score})
+	return score
+}
+
 func main() {
 	lines := inp.ReadLines("input")
 	valves := make(map[string]valve)
@@ -144,6 +270,10 @@ func main() {
 		neighbors[valve.id] = next
 	}
 	nodes, edges := reduceGraph(valves, neighbors)
+
 	pressureRelease := findMaxPressureRelease(nodes, edges, 30)
 	fmt.Printf("Part 1: %d\n", pressureRelease)
+
+	pressureReleaseElephant := findMaxPressureReleaseElephant(nodes, edges, 26)
+	fmt.Printf("Part 2: %d\n", pressureReleaseElephant)
 }

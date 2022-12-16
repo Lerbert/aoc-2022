@@ -93,17 +93,13 @@ func Contains[T comparable](s []T, e T) bool {
 	return false
 }
 
-func SetEqual[T comparable](s1 []T, s2 []T) bool {
+func SetEqual[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
 
-	setS1 := make(map[T]struct{})
-	for _, v := range s1 {
-		setS1[v] = struct{}{}
-	}
-	for _, v := range s2 {
-		if _, ok := setS1[v]; !ok {
+	for v := range s2 {
+		if _, ok := s1[v]; !ok {
 			return false
 		}
 	}
