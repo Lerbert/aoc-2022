@@ -114,7 +114,7 @@ func Sum(s []int) int {
 	return sum
 }
 
-func Max(s []int) int {
+func Max(s ...int) int {
 	max := math.MinInt
 	for _, v := range s {
 		if v > max {
