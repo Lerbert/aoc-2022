@@ -70,7 +70,7 @@ func findSortedIndex(packets []packet, div packet) int {
 
 func main() {
 	lines := inp.ReadLines("input")
-	lines = util.Filter(&lines, func(s string) bool { return s != "" })
+	lines = util.Filter(lines, func(s string) bool { return s != "" })
 	packets := make([]packet, len(lines))
 	for i, l := range lines {
 		if err := json.Unmarshal([]byte(l), &packets[i]); err != nil {

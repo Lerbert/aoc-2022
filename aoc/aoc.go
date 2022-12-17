@@ -40,17 +40,17 @@ func Between[T constraints.Ordered](x T, b1 T, b2 T) bool {
 	}
 }
 
-func Map[T interface{}, S interface{}](s *[]T, f func(T) S) []S {
-	res := make([]S, len(*s))
-	for i, v := range *s {
+func Map[T interface{}, S interface{}](s []T, f func(T) S) []S {
+	res := make([]S, len(s))
+	for i, v := range s {
 		res[i] = f(v)
 	}
 	return res
 }
 
-func Filter[T interface{}](s *[]T, f func(T) bool) []T {
-	res := make([]T, 0, len(*s))
-	for _, v := range *s {
+func Filter[T interface{}](s []T, f func(T) bool) []T {
+	res := make([]T, 0, len(s))
+	for _, v := range s {
 		if f(v) {
 			res = append(res, v)
 		}
@@ -58,16 +58,16 @@ func Filter[T interface{}](s *[]T, f func(T) bool) []T {
 	return res
 }
 
-func Reduce[T interface{}, S interface{}](s *[]T, init S, f func(S, T) S) S {
+func Reduce[T interface{}, S interface{}](s []T, init S, f func(S, T) S) S {
 	res := init
-	for _, v := range *s {
+	for _, v := range s {
 		res = f(res, v)
 	}
 	return res
 }
 
-func Any(s *[]bool) bool {
-	for _, v := range *s {
+func Any(s []bool) bool {
+	for _, v := range s {
 		if v {
 			return true
 		}
@@ -75,8 +75,8 @@ func Any(s *[]bool) bool {
 	return false
 }
 
-func All(s *[]bool) bool {
-	for _, v := range *s {
+func All(s []bool) bool {
+	for _, v := range s {
 		if !v {
 			return false
 		}

@@ -59,7 +59,7 @@ func playRound(monkeys *[]monkey, manageWorry func(int) int) {
 }
 
 func monkeyBusiness(monkeys *[]monkey) int {
-	inspectedItems := util.Map(monkeys, func(m monkey) int { return m.inspectedItems })
+	inspectedItems := util.Map(*monkeys, func(m monkey) int { return m.inspectedItems })
 	businessScore := util.MaxN(inspectedItems, 2)
 	return businessScore[0] * businessScore[1]
 }
@@ -133,7 +133,7 @@ func main() {
 		monkeys[i] = parseMonkey(lines[i*7 : (i+1)*7])
 	}
 	// Since all tests are prime we can find the least common multiple by simply multiplying
-	lcm := util.Reduce(&monkeys, 1, func(acc int, m monkey) int { return m.test * acc })
+	lcm := util.Reduce(monkeys, 1, func(acc int, m monkey) int { return m.test * acc })
 	for round := 0; round < 10000; round++ {
 		playRound(&monkeys, func(worry int) int { return worry % lcm })
 	}

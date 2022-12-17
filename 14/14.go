@@ -25,12 +25,12 @@ func (r *rockFormation) blocks(c util.Coord) bool {
 }
 
 func (r *rockFormation) deepest() int {
-	return util.Max(util.Map(&r.nodes, func(c util.Coord) int { return c.Y }))
+	return util.Max(util.Map(r.nodes, func(c util.Coord) int { return c.Y }))
 }
 
 func rockFromLine(l string) rockFormation {
 	points := strings.Split(l, " -> ")
-	nodes := util.Map(&points, func(s string) util.Coord {
+	nodes := util.Map(points, func(s string) util.Coord {
 		split := strings.Split(s, ",")
 		x, errX := strconv.Atoi(split[0])
 		y, errY := strconv.Atoi(split[1])
@@ -49,9 +49,9 @@ func addSand(rocks *[]rockFormation, bottom int, sand *map[util.Coord]struct{}, 
 
 	newPositions := []util.Coord{{X: pos.X, Y: pos.Y + 1}, {X: pos.X - 1, Y: pos.Y + 1}, {X: pos.X + 1, Y: pos.Y + 1}}
 	for _, newPos := range newPositions {
-		blocked := util.Map(rocks, func(r rockFormation) bool { return r.blocks(newPos) })
+		blocked := util.Map(*rocks, func(r rockFormation) bool { return r.blocks(newPos) })
 		_, hasSand := (*sand)[newPos]
-		if !util.Any(&blocked) && !hasSand {
+		if !util.Any(blocked) && !hasSand {
 			return addSand(rocks, bottom, sand, newPos)
 		}
 	}
@@ -60,7 +60,7 @@ func addSand(rocks *[]rockFormation, bottom int, sand *map[util.Coord]struct{}, 
 }
 
 func fillWithSand(rocks *[]rockFormation, start util.Coord) int {
-	deepest := util.Max(util.Map(rocks, func(r rockFormation) int { return r.deepest() }))
+	deepest := util.Max(util.Map(*rocks, func(r rockFormation) int { return r.deepest() }))
 	sand := make(map[util.Coord]struct{})
 	sandGrains := 0
 	for ; ; sandGrains++ {
@@ -78,12 +78,12 @@ func fillWithSand(rocks *[]rockFormation, start util.Coord) int {
 
 func main() {
 	lines := inp.ReadLines("input")
-	rocks := util.Map(&lines, rockFromLine)
+	rocks := util.Map(lines, rockFromLine)
 
 	sandComeToRest := fillWithSand(&rocks, util.Coord{X: 500, Y: 0})
 	fmt.Printf("Part 1: %d\n", sandComeToRest)
 
-	deepest := util.Max(util.Map(&rocks, func(r rockFormation) int { return r.deepest() }))
+	deepest := util.Max(util.Map(rocks, func(r rockFormation) int { return r.deepest() }))
 	rocks = append(rocks, rockFormation{nodes: []util.Coord{{X: math.MinInt, Y: deepest + 2}, {X: math.MaxInt, Y: deepest + 2}}})
 	sandComeToRest = fillWithSand(&rocks, util.Coord{X: 500, Y: 0})
 	fmt.Printf("Part 2: %d\n", sandComeToRest)

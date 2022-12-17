@@ -93,8 +93,8 @@ func findUncoveredSpot(sensors []sensor, maxSearch int) (int, int) {
 	var y int
 	for y = 0; y <= maxSearch; y++ {
 		ranges := rangesForHeight(sensors, y)
-		inclusion := util.Map(&ranges, func(r util.Range) bool { return r.Includes(util.Range{Lower: 0, Upper: maxSearch}) })
-		if !util.Any(&inclusion) {
+		inclusion := util.Map(ranges, func(r util.Range) bool { return r.Includes(util.Range{Lower: 0, Upper: maxSearch}) })
+		if !util.Any(inclusion) {
 			for _, r := range ranges {
 				if r.Contains(0) {
 					// There is exactly one uncovered spot between 0 and maxSearch, so it must be one after the range that contains zero
@@ -114,14 +114,14 @@ const X_FACTOR = 4_000_000
 
 func main() {
 	lines := inp.ReadLines("input")
-	sensors := util.Map(&lines, sensorfromline)
+	sensors := util.Map(lines, sensorfromline)
 	beacons := make(map[util.Coord]struct{})
 	for _, s := range sensors {
 		beacons[s.beacon] = struct{}{}
 	}
 
 	ranges := rangesForHeight(sensors, HEIGHT)
-	coveredSpots := util.Sum(util.Map(&ranges, func(r util.Range) int { return r.Upper - r.Lower + 1 }))
+	coveredSpots := util.Sum(util.Map(ranges, func(r util.Range) int { return r.Upper - r.Lower + 1 }))
 	correction := coveredBeacons(ranges, beacons, HEIGHT)
 	fmt.Printf("Part 1: %d\n", coveredSpots-correction)
 
