@@ -106,6 +106,16 @@ func SetEqual[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) bool {
 	return true
 }
 
+func SetIntersect[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) map[T]struct{} {
+	intersection := make(map[T]struct{})
+	for v := range s2 {
+		if _, ok := s1[v]; ok {
+			intersection[v] = struct{}{}
+		}
+	}
+	return intersection
+}
+
 func Sum(s []int) int {
 	sum := 0
 	for _, v := range s {
