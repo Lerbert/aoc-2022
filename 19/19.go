@@ -77,6 +77,7 @@ func initState(minutes int) state {
 }
 
 func (s state) track() state {
+	// Don't track blocked robots as they are not relevant to the best possible outcome from this state
 	s.couldBuildPrev = 0
 	return s
 }
@@ -99,6 +100,8 @@ func (s state) canBuildNow(bp blueprint) int {
 }
 
 func (s state) nextMinute(build int, bp blueprint) state {
+	// Block all robots we could build now until we build another robot
+	// There is no point in delaying to build a robot and doing nothing instead
 	if build == NONE {
 		s.couldBuildPrev = s.canBuildNow(bp)
 	} else {
@@ -197,4 +200,16 @@ func main() {
 		qualityLevelSum += maxGeodes[i] * bp.id
 	}
 	fmt.Printf("Part 1: %d\n", qualityLevelSum)
+
+	// Elephants munch the blueprints
+	if len(blueprints) > 3 {
+		blueprints = blueprints[:3]
+	}
+
+	maxGeodes2 := util.Map(blueprints, func(bp blueprint) int { return findMaxGeodes(bp, 32) })
+	geodeProduct := 1
+	for _, geodes := range maxGeodes2 {
+		geodeProduct *= geodes
+	}
+	fmt.Printf("Part 2: %d\n", geodeProduct)
 }
