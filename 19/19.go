@@ -190,14 +190,59 @@ func findMaxGeodesRec(bp blueprint, currentState state, currentBest int, memo ma
 	return best
 }
 
+type job struct {
+	bp      blueprint
+	minutes int
+}
+
+type result struct {
+	j      job
+	geodes int
+}
+
+func worker(jobChan chan job, resultChan chan result) {
+	for job := range jobChan {
+		geodes := findMaxGeodes(job.bp, job.minutes)
+		resultChan <- result{j: job, geodes: geodes}
+	}
+}
+
+func sendJobs(jobChan chan job, blueprints []blueprint, minutes int) {
+	for _, bp := range blueprints {
+		jobChan <- job{bp: bp, minutes: minutes}
+	}
+	close(jobChan)
+}
+
+func findMaxGeodesPar(blueprints []blueprint, minutes int, workers int) []result {
+	jobChan := make(chan job)
+	resultChan := make(chan result, workers)
+
+	for i := 0; i < workers; i++ {
+		go worker(jobChan, resultChan)
+	}
+
+	go sendJobs(jobChan, blueprints, minutes)
+
+	results := make([]result, len(blueprints))
+	for i := range results {
+		results[i] = <-resultChan
+	}
+	close(resultChan)
+
+	return results
+}
+
+const NUM_WORKERS = 1
+
 func main() {
 	lines := inp.ReadLines("input")
 	blueprints := util.Map(lines, blueprintFromLine)
 
-	maxGeodes := util.Map(blueprints, func(bp blueprint) int { return findMaxGeodes(bp, 24) })
+	maxGeodes := findMaxGeodesPar(blueprints, 24, NUM_WORKERS)
 	qualityLevelSum := 0
-	for i, bp := range blueprints {
-		qualityLevelSum += maxGeodes[i] * bp.id
+	for _, res := range maxGeodes {
+		qualityLevelSum += res.geodes * res.j.bp.id
 	}
 	fmt.Printf("Part 1: %d\n", qualityLevelSum)
 
@@ -206,10 +251,10 @@ func main() {
 		blueprints = blueprints[:3]
 	}
 
-	maxGeodes2 := util.Map(blueprints, func(bp blueprint) int { return findMaxGeodes(bp, 32) })
+	maxGeodes2 := findMaxGeodesPar(blueprints, 32, NUM_WORKERS)
 	geodeProduct := 1
-	for _, geodes := range maxGeodes2 {
-		geodeProduct *= geodes
+	for _, res := range maxGeodes2 {
+		geodeProduct *= res.geodes
 	}
 	fmt.Printf("Part 2: %d\n", geodeProduct)
 }
