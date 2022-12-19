@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"strconv"
 )
 
 func ReadLines(path string) []string {
@@ -18,4 +19,12 @@ func ReadLines(path string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	return lines
+}
+
+func MustAtoi(s string) int {
+	x, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatal("Could not parse int ", err)
+	}
+	return x
 }
