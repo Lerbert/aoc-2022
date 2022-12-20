@@ -1,6 +1,7 @@
 package main
 
 import (
+	util "aoc2022/aoc"
 	inp "aoc2022/input"
 	"fmt"
 )
@@ -18,7 +19,7 @@ func wrap(index int, length int) int {
 	}
 }
 
-func mix(numbers []uniqueNumber) ([]uniqueNumber, map[uniqueNumber]int) {
+func mix(numbers []uniqueNumber, rounds int) ([]uniqueNumber, map[uniqueNumber]int) {
 	numbersLen := len(numbers)
 	mixedIndices := make(map[uniqueNumber]int)
 	mixed := make([]uniqueNumber, numbersLen)
@@ -27,9 +28,18 @@ func mix(numbers []uniqueNumber) ([]uniqueNumber, map[uniqueNumber]int) {
 		mixedIndices[x] = i
 	}
 
+	for i := 0; i < rounds; i++ {
+		mixingRound(numbers, mixed, mixedIndices)
+	}
+
+	return mixed, mixedIndices
+}
+
+func mixingRound(numbers []uniqueNumber, mixed []uniqueNumber, mixedIndices map[uniqueNumber]int) {
+	numbersLen := len(numbers)
 	for _, x := range numbers {
 		xIndex := mixedIndices[x]
-		offset := x.n
+		offset := x.n % (numbersLen - 1)
 		if offset >= 0 {
 			for i := xIndex; i < xIndex+offset; i++ {
 				fst, snd := mixed[wrap(i, numbersLen)], mixed[wrap(i+1, numbersLen)]
@@ -44,8 +54,18 @@ func mix(numbers []uniqueNumber) ([]uniqueNumber, map[uniqueNumber]int) {
 			}
 		}
 	}
-	return mixed, mixedIndices
 }
+
+func coordinateSum(mixed []uniqueNumber, mixedIndices map[uniqueNumber]int) int {
+	coordinates := 0
+	for i := 1; i <= 3; i++ {
+		coordinates += mixed[wrap(mixedIndices[uniqueNumber{id: 0, n: 0}]+i*1000, len(mixed))].n
+	}
+	return coordinates
+}
+
+const DECRYPTION_KEY = 811589153
+const ROUNDS = 10
 
 func main() {
 	lines := inp.ReadLines("input")
@@ -59,10 +79,14 @@ func main() {
 		numbers[i] = uniqueNumber{id: id, n: n}
 	}
 
-	mixed, mixedIndices := mix(numbers)
-	coordinates := 0
-	for i := 1; i <= 3; i++ {
-		coordinates += mixed[wrap(mixedIndices[uniqueNumber{id: 0, n: 0}]+i*1000, len(mixed))].n
-	}
+	mixed, mixedIndices := mix(numbers, 1)
+	coordinates := coordinateSum(mixed, mixedIndices)
 	fmt.Printf("Part 1: %d\n", coordinates)
+
+	// Apply decryption key
+	numbers = util.Map(numbers, func(u uniqueNumber) uniqueNumber { return uniqueNumber{id: u.id, n: u.n * DECRYPTION_KEY} })
+
+	mixed, mixedIndices = mix(numbers, ROUNDS)
+	coordinates = coordinateSum(mixed, mixedIndices)
+	fmt.Printf("Part 2: %d\n", coordinates)
 }
