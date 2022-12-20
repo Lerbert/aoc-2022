@@ -39,7 +39,7 @@ func mixingRound(numbers []uniqueNumber, mixed []uniqueNumber, mixedIndices map[
 	numbersLen := len(numbers)
 	for _, x := range numbers {
 		xIndex := mixedIndices[x]
-		offset := x.n % (numbersLen - 1)
+		offset := x.n % (numbersLen - 1) // -1 because we have to ignore the position of the number we are currently shifting
 		if offset >= 0 {
 			for i := xIndex; i < xIndex+offset; i++ {
 				fst, snd := mixed[wrap(i, numbersLen)], mixed[wrap(i+1, numbersLen)]
