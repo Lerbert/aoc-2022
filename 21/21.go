@@ -175,6 +175,8 @@ func main() {
 		monkeys[m.name] = m
 	}
 
+	// No large benefit from memoization here, probably because the dependencies of the monkeys form a tree
+
 	rootNumber := findMonkeyNumber(monkeys, ROOT)
 	fmt.Printf("Part 1: %d\n", rootNumber)
 
