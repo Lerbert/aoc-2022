@@ -29,18 +29,18 @@ func neighborsInDirection(neighbors []util.Coord, dir direction) []util.Coord {
 	return neighbors[2*offset : 2*offset+3]
 }
 
-func propose(current util.Coord, elves map[util.Coord]struct{}, startDirection direction) util.Coord {
+func propose(current util.Coord, elves map[util.Coord]struct{}, startDirection direction) (util.Coord, bool) {
 	n := neighbors(current)
 	if util.All(util.Map(n, func(c util.Coord) bool { return !util.SetIn(elves, c) })) {
-		return current
+		return current, false
 	}
 	for i := 0; i < 4; i++ {
 		nID := neighborsInDirection(n, direction((int(startDirection)+i)%NUM_DIRECTIONS))
 		if !util.SetIn(elves, nID[0]) && !util.SetIn(elves, nID[1]) && !util.SetIn(elves, nID[2]) {
-			return nID[1]
+			return nID[1], true
 		}
 	}
-	return current
+	return current, false
 }
 
 func move(elf util.Coord, elves map[util.Coord]struct{}, proposals map[util.Coord]util.Coord) {
@@ -51,19 +51,21 @@ func move(elf util.Coord, elves map[util.Coord]struct{}, proposals map[util.Coor
 	}
 }
 
-func round(elves map[util.Coord]struct{}, startDirection direction) {
+func round(elves map[util.Coord]struct{}, startDirection direction) bool {
 	proposals := make(map[util.Coord]util.Coord)
 	destinationCnt := make(map[util.Coord]int)
 
 	// Get proposals
 	for elf := range elves {
-		dest := propose(elf, elves, startDirection)
-		proposals[elf] = dest
-		_, ok := destinationCnt[dest]
-		if !ok {
-			destinationCnt[dest] = 0
+		dest, move := propose(elf, elves, startDirection)
+		if move {
+			proposals[elf] = dest
+			_, ok := destinationCnt[dest]
+			if !ok {
+				destinationCnt[dest] = 0
+			}
+			destinationCnt[dest]++
 		}
-		destinationCnt[dest]++
 	}
 
 	// Remove duplicate proposals
@@ -71,6 +73,11 @@ func round(elves map[util.Coord]struct{}, startDirection direction) {
 		if destinationCnt[dest] > 1 {
 			delete(proposals, elf)
 		}
+	}
+
+	// Check if there are moves to make
+	if len(proposals) == 0 {
+		return false
 	}
 
 	// Copy for safe iteration
@@ -85,14 +92,32 @@ func round(elves map[util.Coord]struct{}, startDirection direction) {
 	for _, elf := range elvesIter {
 		move(elf, elves, proposals)
 	}
+
+	return true
 }
 
 func simulate(elves map[util.Coord]struct{}, limit int) {
 	startingDirection := North
 	for r := 0; r < limit; r++ {
-		round(elves, startingDirection)
+		changed := round(elves, startingDirection)
+		if !changed {
+			break
+		}
 		startingDirection = (startingDirection + 1) % direction(NUM_DIRECTIONS)
 	}
+}
+
+func simulateUntilFixedPoint(elves map[util.Coord]struct{}) int {
+	startingDirection := North
+	r := 0
+	for r = 0; ; r++ {
+		changed := round(elves, startingDirection)
+		if !changed {
+			break
+		}
+		startingDirection = (startingDirection + 1) % direction(NUM_DIRECTIONS)
+	}
+	return r
 }
 
 func boundingBox(elves map[util.Coord]struct{}) (util.Coord, util.Coord) {
@@ -120,19 +145,19 @@ func emptyInBB(elves map[util.Coord]struct{}) int {
 	return (bbMax.X-bbMin.X+1)*(bbMax.Y-bbMin.Y+1) - len(elves)
 }
 
-func printElves(elves map[util.Coord]struct{}) {
-	bbMin, bbMax := boundingBox(elves)
-	for y := bbMin.Y; y <= bbMax.Y; y++ {
-		for x := bbMin.X; x <= bbMax.X; x++ {
-			if _, ok := elves[util.Coord{X: x, Y: y}]; ok {
-				fmt.Print("#")
-			} else {
-				fmt.Print(".")
-			}
-		}
-		fmt.Println("")
-	}
-}
+// func printElves(elves map[util.Coord]struct{}) {
+// 	bbMin, bbMax := boundingBox(elves)
+// 	for y := bbMin.Y; y <= bbMax.Y; y++ {
+// 		for x := bbMin.X; x <= bbMax.X; x++ {
+// 			if _, ok := elves[util.Coord{X: x, Y: y}]; ok {
+// 				fmt.Print("#")
+// 			} else {
+// 				fmt.Print(".")
+// 			}
+// 		}
+// 		fmt.Println("")
+// 	}
+// }
 
 func parseElves(lines []string) map[util.Coord]struct{} {
 	elves := make(map[util.Coord]struct{})
@@ -150,7 +175,16 @@ func main() {
 	lines := inp.ReadLines("input")
 	elves := parseElves(lines)
 
+	// Copy for part 2
+	elves2 := make(map[util.Coord]struct{})
+	for elf := range elves {
+		elves2[elf] = struct{}{}
+	}
+
 	simulate(elves, 10)
 	empytTiles := emptyInBB(elves)
 	fmt.Printf("Part 1: %d\n", empytTiles)
+
+	rounds := simulateUntilFixedPoint(elves2)
+	fmt.Printf("Part 1: %d\n", rounds+1)
 }

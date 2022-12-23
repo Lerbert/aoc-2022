@@ -119,6 +119,19 @@ func SetEqual[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) bool {
 	return true
 }
 
+func SetSubset[T comparable](sub map[T]struct{}, super map[T]struct{}) bool {
+	if len(sub) > len(super) {
+		return false
+	}
+
+	for v := range sub {
+		if _, ok := super[v]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func SetIntersect[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) map[T]struct{} {
 	intersection := make(map[T]struct{})
 	for v := range s2 {
