@@ -15,6 +15,19 @@ func (c Coord) ManhattanDistance(other Coord) int {
 	return Abs(c.X-other.X) + Abs(c.Y-other.Y)
 }
 
+func (c Coord) Neighbors() []Coord {
+	neighbors := make([]Coord, 8)
+	neighbors[0] = Coord{X: c.X - 1, Y: c.Y - 1}
+	neighbors[1] = Coord{X: c.X, Y: c.Y - 1}
+	neighbors[2] = Coord{X: c.X + 1, Y: c.Y - 1}
+	neighbors[3] = Coord{X: c.X + 1, Y: c.Y}
+	neighbors[4] = Coord{X: c.X + 1, Y: c.Y + 1}
+	neighbors[5] = Coord{X: c.X, Y: c.Y + 1}
+	neighbors[6] = Coord{X: c.X - 1, Y: c.Y + 1}
+	neighbors[7] = Coord{X: c.X - 1, Y: c.Y}
+	return neighbors
+}
+
 type Range struct {
 	Lower int
 	Upper int
@@ -114,6 +127,11 @@ func SetIntersect[T comparable](s1 map[T]struct{}, s2 map[T]struct{}) map[T]stru
 		}
 	}
 	return intersection
+}
+
+func SetIn[T comparable](s map[T]struct{}, e T) bool {
+	_, ok := s[e]
+	return ok
 }
 
 func Sum(s []int) int {
