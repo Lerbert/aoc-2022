@@ -75,13 +75,15 @@ func bfsRec(blizzards []blizzard, toVisit map[util.Coord]struct{}, start util.Co
 
 		visitNext := make(map[util.Coord]struct{}) // Use map to avoid duplicate insertions
 		for c := range toVisit {
-			if c == end {
-				return steps
-			}
 			// Look at all neighbors + waiting
 			consider := append(c.OrthogonalNeighbors(), c)
 			for _, n := range consider {
-				if (util.Between(n.X, 0, mapWidth-1) && util.Between(n.Y, 0, mapHeight-1)) || n == start || n == end {
+				if n == end {
+					// End never has a blizzard, so we can reach it in the next step
+					// Quitting here leaves the blizzards in the right position
+					return steps + 1
+				}
+				if (util.Between(n.X, 0, mapWidth-1) && util.Between(n.Y, 0, mapHeight-1)) || n == start {
 					// Valid neighbor
 					if !util.Contains(blizzardPositions, n) {
 						visitNext[n] = struct{}{}
@@ -111,9 +113,14 @@ func parseBlizzards(lines []string) []blizzard {
 func main() {
 	lines := inp.ReadLines("input")
 	blizzards := parseBlizzards(lines)
+	// Subtract one from coordinates so that (0, 0) is the top left corner of the area inside the walls
 	start := util.Coord{Y: -1, X: strings.IndexByte(lines[0], '.') - 1}
 	end := util.Coord{Y: len(lines) - 2, X: strings.IndexByte(lines[len(lines)-1], '.') - 1}
 
-	minutes := bfs(blizzards, start, end)
-	fmt.Printf("Part 1: %d\n", minutes)
+	minutesSE1 := bfs(blizzards, start, end)
+	fmt.Printf("Part 1: %d\n", minutesSE1)
+
+	minutesES := bfs(blizzards, end, start)
+	minutesSE2 := bfs(blizzards, start, end)
+	fmt.Printf("Part 2: %d\n", minutesSE1+minutesES+minutesSE2)
 }
