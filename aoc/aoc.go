@@ -28,6 +28,15 @@ func (c Coord) Neighbors() []Coord {
 	return neighbors
 }
 
+func (c Coord) OrthogonalNeighbors() []Coord {
+	neighbors := make([]Coord, 4)
+	neighbors[0] = Coord{X: c.X, Y: c.Y - 1}
+	neighbors[1] = Coord{X: c.X + 1, Y: c.Y}
+	neighbors[2] = Coord{X: c.X, Y: c.Y + 1}
+	neighbors[3] = Coord{X: c.X - 1, Y: c.Y}
+	return neighbors
+}
+
 type Range struct {
 	Lower int
 	Upper int
@@ -43,6 +52,14 @@ func (r Range) Includes(other Range) bool {
 
 func (r Range) Overlaps(other Range) bool {
 	return r.Contains(other.Lower) || r.Contains(other.Upper) || other.Includes(r)
+}
+
+func WrapIndex(index int, length int) int {
+	if mod := index % length; mod >= 0 {
+		return mod
+	} else {
+		return length + mod
+	}
 }
 
 func Between[T constraints.Ordered](x T, b1 T, b2 T) bool {

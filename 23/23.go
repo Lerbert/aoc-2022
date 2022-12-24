@@ -186,5 +186,5 @@ func main() {
 	fmt.Printf("Part 1: %d\n", empytTiles)
 
 	rounds := simulateUntilFixedPoint(elves2)
-	fmt.Printf("Part 1: %d\n", rounds+1)
+	fmt.Printf("Part 2: %d\n", rounds+1)
 }
