@@ -219,3 +219,11 @@ func Sgn(x int) int {
 		return 0
 	}
 }
+
+func Pow(base int, exp int) int {
+	res := 1
+	for x := 0; x < exp; x++ {
+		res *= base
+	}
+	return res
+}
